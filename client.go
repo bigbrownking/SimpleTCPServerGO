@@ -74,7 +74,6 @@ func main() {
 		fmt.Print("Enter message: ")
 		text, _ := reader.ReadString('\n')
 
-		// Check if the user wants to display history
 		if strings.TrimSpace(text) == "HISTORY" {
 			client.DisplayHistory()
 			continue
