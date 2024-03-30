@@ -74,7 +74,6 @@ func main() {
 		fmt.Print("Enter message: ")
 		text, _ := reader.ReadString('\n')
 
-		// Check if the user wants to display history
 		if strings.TrimSpace(text) == "HISTORY" {
 			client.DisplayHistory()
 			continue
@@ -96,7 +95,7 @@ func main() {
 		// Check if the user wants to exit
 		if strings.TrimSpace(text) == "EXIT" {
 			fmt.Println("Exiting...")
-			conn.Close() // Close the connection
+			conn.Close()
 			os.Exit(0)
 		}
 
