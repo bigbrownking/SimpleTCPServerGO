@@ -61,7 +61,7 @@ func handleRequest(conn net.Conn) {
 
 		log.Infof("Received message from %s: %s", username, message)
 
-		_, err = conn.Write([]byte("Thank you for sending message\n"))
+		_, err = conn.Write([]byte("Server received the message\n"))
 		if err != nil {
 			log.WithError(err).Error("Error sending confirmation message to client")
 			break

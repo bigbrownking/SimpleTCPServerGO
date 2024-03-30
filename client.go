@@ -4,27 +4,56 @@ import (
 	"Ex1_Week1/constants"
 	"bufio"
 	"fmt"
+	"github.com/go-playground/log"
 	"net"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/go-playground/log"
-	"github.com/go-playground/log/handlers/console"
 )
 
-func main() {
-	log.AddHandler(console.New(true), log.AllLevels...)
+type Client struct {
+	conn       *net.TCPConn
+	reader     *bufio.Reader
+	username   string
+	historyLog []string
+}
 
+func NewClient(conn *net.TCPConn, reader *bufio.Reader, username string) *Client {
+	return &Client{
+		conn:       conn,
+		reader:     reader,
+		username:   username,
+		historyLog: make([]string, 0),
+	}
+}
+
+func (c *Client) Send(message string) error {
+	_, err := c.conn.Write([]byte(message))
+	if err != nil {
+		return err
+	}
+	c.historyLog = append(c.historyLog, message)
+	return nil
+}
+
+func (c *Client) DisplayHistory() {
+	fmt.Println("=== Message History ===")
+	for _, msg := range c.historyLog {
+		fmt.Println(msg)
+	}
+	fmt.Println("======================")
+}
+
+func main() {
 	tcpServer, err := net.ResolveTCPAddr(constants.TYPE, constants.HOST+":"+constants.PORT)
 	if err != nil {
-		log.WithError(err).Error("ResolveTCPAddr failed")
+		fmt.Println("ResolveTCPAddr failed:", err)
 		os.Exit(1)
 	}
 
-	conn, err := net.DialTCP(constants.TYPE, nil, tcpServer)
+	conn, err := net.DialTCP("tcp", nil, tcpServer)
 	if err != nil {
-		log.WithError(err).Error("Dial failed")
+		fmt.Println("Dial failed:", err)
 		os.Exit(1)
 	}
 
@@ -33,26 +62,28 @@ func main() {
 	fmt.Print("Enter your username: ")
 	username, _ := reader.ReadString('\n')
 
-	_, err = conn.Write([]byte(username))
+	client := NewClient(conn, reader, username)
+
+	err = client.Send(username)
 	if err != nil {
-		log.WithError(err).Error("Write data failed")
+		fmt.Println("Write data failed:", err)
 		os.Exit(1)
 	}
 
 	for {
-		log.Info("Enter message: ")
+		fmt.Print("Enter message: ")
 		text, _ := reader.ReadString('\n')
 
-		_, err = conn.Write([]byte(text))
-		if err != nil {
-			log.WithError(err).Error("Write data failed")
-			os.Exit(1)
+		// Check if the user wants to display history
+		if strings.TrimSpace(text) == "HISTORY" {
+			client.DisplayHistory()
+			continue
 		}
 
-		if strings.TrimSpace(text) == "EXIT" {
-			log.Info("Exiting...")
-			conn.Close()
-			os.Exit(0)
+		err = client.Send(text)
+		if err != nil {
+			fmt.Println("Write data failed:", err)
+			os.Exit(1)
 		}
 
 		response, err := bufio.NewReader(conn).ReadString('\n')
@@ -61,6 +92,13 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Print(response)
+
+		// Check if the user wants to exit
+		if strings.TrimSpace(text) == "EXIT" {
+			fmt.Println("Exiting...")
+			conn.Close() // Close the connection
+			os.Exit(0)
+		}
 
 		time.Sleep(1 * time.Second)
 	}
