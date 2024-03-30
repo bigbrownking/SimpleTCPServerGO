@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-playground/log"
@@ -46,6 +47,12 @@ func main() {
 		if err != nil {
 			log.WithError(err).Error("Write data failed")
 			os.Exit(1)
+		}
+
+		if strings.TrimSpace(text) == "EXIT" {
+			log.Info("Exiting...")
+			conn.Close()
+			os.Exit(0)
 		}
 
 		response, err := bufio.NewReader(conn).ReadString('\n')
