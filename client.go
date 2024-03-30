@@ -93,10 +93,9 @@ func main() {
 		}
 		fmt.Print(response)
 
-		// Check if the user wants to exit
 		if strings.TrimSpace(text) == "EXIT" {
 			fmt.Println("Exiting...")
-			conn.Close() // Close the connection
+			conn.Close()
 			os.Exit(0)
 		}
 
